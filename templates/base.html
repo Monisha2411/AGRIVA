@@ -1,0 +1,784 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="description" content="AGRIVA - AI-powered smart agriculture platform">
+
+    <title>{% block title %}AGRIVA{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- AOS -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- NProgress -->
+    <script src="{{ url_for('static', filename='js/nprogress.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/nprogress.css') }}">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
+    <script src="//instant.page/5.2.0" type="module"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Razorpay -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    {% block extra_css %}{% endblock %}
+
+    <style>
+        :root {
+            --primary-glow: #238636;
+            --secondary-glow: #65a30d;
+            --accent-glow: #a7e163;
+            --bg-dark: #f5f8f3;
+            --glass-bg: rgba(255,255,255,0.9);
+            --border-glass: rgba(35,134,54,0.12);
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 36px rgba(0,0,0,0.10);
+            --transition-speed: 0.2s;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: #1f2937;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Navbar */
+
+        .navbar {
+            background: rgba(255,255,255,0.98) !important;
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid #e5eee4;
+            padding: 13px 0;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            color: #176b32 !important;
+        }
+
+        .brand-name,
+        .navbar .navbar-brand .brand-name {
+            color: #176b38 !important;
+            -webkit-text-fill-color: #176b38 !important;
+        }
+
+        .navbar .navbar-brand {
+            color: #176b38 !important;
+            text-decoration: none;
+        }
+
+        /* AGRIVA Logo */
+
+        .agriva-logo-icon {
+            width: 52px;
+            height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #176b38, #2e914b);
+            box-shadow: 0 4px 12px rgba(23,107,56,0.2);
+        }
+
+        .agriva-logo-icon i,
+        .agriva-logo-icon svg {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+            width: 27px;
+            height: 27px;
+            font-size: 25px;
+            flex: 0 0 auto;
+        }
+
+        .navbar .navbar-brand .agriva-logo-icon svg {
+            fill: #ffffff !important;
+        }
+
+        .navbar .nav-link {
+            color: #334155 !important;
+            font-weight: 600;
+            padding: 10px 13px !important;
+            border-radius: 9px;
+        }
+
+        .navbar .nav-link:hover {
+            color: #238636 !important;
+            background: #eff8ed;
+        }
+
+        .navbar-toggler {
+            border-color: #d1e5d0;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.15rem rgba(35,134,54,0.2);
+        }
+
+        /* Google Translate */
+
+        .goog-te-banner-frame.skiptranslate,
+        .goog-te-gadget-icon {
+            display: none !important;
+        }
+
+        body {
+            top: 0 !important;
+        }
+
+        .goog-te-gadget-simple {
+            background: #f0f8ed !important;
+            border: 1px solid #d5e9d0 !important;
+            border-radius: 10px !important;
+            padding: 8px 12px !important;
+            font-size: 0.8rem !important;
+        }
+
+        .goog-te-menu-value span {
+            color: #176b32 !important;
+            font-weight: 600 !important;
+        }
+
+        @media (max-width: 991px) {
+            #google_translate_element {
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Buttons and Cards */
+
+        .btn, .card, .action-item, .nav-link {
+            transition: all var(--transition-speed) ease !important;
+        }
+
+        .btn:active,
+        .action-item:active {
+            transform: scale(0.96);
+        }
+
+        .btn-success {
+            background: #238636;
+            border-color: #238636;
+        }
+
+        .btn-success:hover {
+            background: #176b32;
+            border-color: #176b32;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: #9aca91 !important;
+            box-shadow: 0 10px 25px rgba(35,134,54,0.10) !important;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        /* Scrollbar */
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #edf3ea;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #a7c9a0;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #238636;
+        }
+
+        /* Progress */
+
+        #nprogress .bar {
+            background: linear-gradient(to right,#238636,#84cc16) !important;
+            height: 3px !important;
+        }
+
+        #nprogress .spinner-icon {
+            border-top-color: #238636 !important;
+            border-left-color: #238636 !important;
+        }
+
+        /* Mobile Navigation */
+
+        .mobile-nav {
+            background: #ffffff;
+            border-top: 1px solid #e5eee4;
+        }
+
+        .mobile-nav .nav-item {
+            color: #64748b;
+        }
+
+        .mobile-nav .nav-item.active {
+            color: #238636;
+        }
+
+        .action-btn-main {
+            background: #238636;
+            color: #ffffff;
+        }
+
+        [data-aos] {
+            transition-duration: 250ms !important;
+            transition-timing-function: cubic-bezier(0.4,0,0.2,1) !important;
+        }
+    </style>
+
+    <!-- Google Translate -->
+    <script>
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,kn,hi,te,ta,ml,mr',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+                autoDisplay: false
+            }, 'google_translate_element');
+        }
+    </script>
+
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</head>
+
+<body>
+
+    <!-- AGRIVA Navbar -->
+
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top"
+         hx-boost="true"
+         hx-target="#main-content"
+         hx-select="#main-content"
+         aria-label="Main navigation">
+
+        <div class="container">
+
+            <a class="navbar-brand"
+               href="{{ url_for('index') }}"
+               hx-boost="false"
+               aria-label="AGRIVA Home">
+
+                <span class="agriva-logo-icon me-2">
+                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"
+                         aria-hidden="true" focusable="false">
+                        <path d="M53.8 8.5C34.1 8.8 17.1 13.1 10.2 25.2c-5.1 8.9-.8 19.1 8.8 20.6 8.2 1.3 15.5-5.1 17.2-14.1-5.4 4.2-10.5 5.6-15.1 4.8C27.2 29.7 39.2 20.4 54.8 17c1.2 13.8-2.2 27.3-14.4 34.1-8.1 4.5-17.1 3.1-22.1-2.7 4.8 1.7 9.6 1.1 13.6-1.2C48.1 39.1 54.5 24.2 53.8 8.5Z"/>
+                    </svg>
+                </span>
+
+                <span class="brand-name">AGRIVA</span>
+            </a>
+
+            <div id="google_translate_element" class="ms-auto me-3"></div>
+
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+
+                <ul class="navbar-nav me-auto">
+
+                    {% if current_user.is_authenticated %}
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard.home') }}">
+                            <i class="fa-solid fa-gauge"></i>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('roadmap.index') }}">
+                            <i class="fa-solid fa-route"></i>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-warning" href="{{ url_for('chatbot.chat') }}">
+                            <i class="fa-solid fa-robot"></i>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link text-primary" href="{{ url_for('dashboard.my_orders') }}">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </a>
+                    </li>
+
+                    {% endif %}
+
+                </ul>
+
+                <ul class="navbar-nav ms-auto">
+
+                    {% if current_user.is_authenticated %}
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="{{ url_for('auth.logout') }}"
+                           hx-boost="false">
+                            Logout
+                        </a>
+                    </li>
+
+                    {% else %}
+
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="{{ url_for('auth.login') }}"
+                           hx-boost="false">
+                            Login
+                        </a>
+                    </li>
+
+                    {% endif %}
+
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Progress Indicator -->
+
+    <div id="progress-indicator"
+         class="htmx-indicator"
+         role="progressbar"
+         aria-label="Loading page"
+         style="position:fixed;top:0;left:0;width:100%;height:3px;background:#238636;z-index:9999;">
+    </div>
+
+    <!-- Main Content -->
+
+    <main id="main-content" class="container py-4 mb-5-mobile">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+            {% if messages %}
+
+                <div class="mb-4">
+
+                    {% for category, message in messages %}
+
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show"
+                         role="alert">
+
+                        {{ message }}
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Close">
+                        </button>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+
+        {% block extra_js %}{% endblock %}
+
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+
+    <nav class="mobile-nav"
+         hx-boost="true"
+         hx-target="#main-content"
+         hx-select="#main-content"
+         aria-label="Mobile Bottom Navigation">
+
+        <a href="{{ url_for('dashboard.home') }}"
+           class="nav-item"
+           aria-label="Home">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+
+        <a href="{{ url_for('marketplace.browse') }}"
+           class="nav-item"
+           aria-label="Market">
+            <i class="fa-solid fa-store"></i>
+            <span>Market</span>
+        </a>
+
+        <button class="nav-item action-trigger border-0 bg-transparent"
+                onclick="toggleActionSheet()"
+                aria-label="Open Quick Actions">
+
+            <div class="action-btn-main">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+
+            <span>Actions</span>
+        </button>
+
+        <a href="{{ url_for('shop.public_shop') }}"
+           class="nav-item"
+           aria-label="Shop">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span>Shop</span>
+        </a>
+
+        <a href="{{ url_for('chatbot.chat') }}"
+           class="nav-item"
+           aria-label="Chatbot">
+            <i class="fa-solid fa-robot"></i>
+            <span>AgriBot</span>
+        </a>
+
+    </nav>
+
+    <!-- Action Sheet Overlay -->
+
+    <div id="action-sheet-overlay"
+         class="action-sheet-overlay"
+         onclick="toggleActionSheet()"
+         aria-hidden="true">
+    </div>
+
+    <!-- Action Sheet -->
+
+    <div id="action-sheet"
+         class="action-sheet"
+         role="dialog"
+         aria-labelledby="action-sheet-title">
+
+        <div class="action-sheet-header">
+
+            <div class="handle"></div>
+
+            <h5 id="action-sheet-title" class="text-dark fw-bold mb-0">
+                Quick Actions
+            </h5>
+
+            <button class="btn-close"
+                    onclick="toggleActionSheet()"
+                    aria-label="Close Actions">
+            </button>
+
+        </div>
+
+        <div class="action-sheet-body"
+             hx-boost="true"
+             hx-target="#main-content"
+             hx-select="#main-content">
+
+            <div class="row g-3">
+
+                <div class="col-4">
+                    <a href="{{ url_for('labour.find_labour') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-users text-primary"></i>
+                        <span>Find Labour</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('marketplace.add_listing') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-circle-plus text-warning"></i>
+                        <span>Sell Crop</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('schemes.scheme_list') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-file-invoice-dollar text-info"></i>
+                        <span>Schemes</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('roadmap.index') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-route text-success"></i>
+                        <span>Roadmap</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('vision.three_eye') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-eye text-success"></i>
+                        <span>3 EYE</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('cooler.index') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-snowflake text-primary"></i>
+                        <span>Cooler</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('fertilizer.scan') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-flask text-info"></i>
+                        <span>Fertilizer</span>
+                    </a>
+                </div>
+
+                <div class="col-4">
+                    <a href="{{ url_for('gov_mitra.dashboard') }}"
+                       class="action-item"
+                       onclick="toggleActionSheet()">
+                        <i class="fa-solid fa-building-columns text-dark"></i>
+                        <span>Gov Mitra</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- AOS -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        (function () {
+
+            function setup() {
+                if (window.AOS) {
+                    AOS.init({
+                        duration: 300,
+                        once: true
+                    });
+                }
+            }
+
+            setup();
+
+            document.body.addEventListener('htmx:beforeSend', function () {
+                if (window.NProgress) {
+                    NProgress.start();
+                }
+            });
+
+            document.body.addEventListener('htmx:afterOnLoad', function () {
+                if (window.NProgress) {
+                    NProgress.done();
+                }
+
+                setup();
+                updateMobileNav();
+                window.scrollTo(0, 0);
+            });
+
+            window.addEventListener('scroll', function () {
+                var nav = document.querySelector('.navbar');
+
+                if (nav) {
+                    nav.classList.toggle('scrolled', window.scrollY > 20);
+                }
+            });
+
+            function updateMobileNav() {
+                var path = window.location.pathname;
+
+                document.querySelectorAll('.mobile-nav .nav-item').forEach(function (item) {
+                    item.classList.toggle(
+                        'active',
+                        item.getAttribute('href') === path
+                    );
+                });
+            }
+
+            window.toggleActionSheet = function () {
+                const sheet = document.getElementById('action-sheet');
+                const overlay = document.getElementById('action-sheet-overlay');
+
+                if (!sheet || !overlay) return;
+
+                const isOpen = sheet.classList.contains('active');
+
+                sheet.classList.toggle('active', !isOpen);
+                overlay.classList.toggle('active', !isOpen);
+                document.body.style.overflow = isOpen ? 'auto' : 'hidden';
+            };
+
+            updateMobileNav();
+
+            // Razorpay Payment Handler
+
+            window.handleRazorpayPayment = async function (type, rzpKey, event) {
+
+                const btn = event ? event.currentTarget : null;
+                const originalHTML = btn ? btn.innerHTML : '';
+
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Processing...';
+                }
+
+                try {
+                    if (typeof Razorpay === 'undefined') {
+                        throw new Error("Payment SDK not loaded. Please refresh.");
+                    }
+
+                    const rzpOptions = {
+                        key: rzpKey,
+                        amount: 100,
+                        currency: "INR",
+                        name: "AGRIVA",
+                        description: type === 'activation'
+                            ? "Shop Activation"
+                            : "Service Payment",
+
+                        handler: async function (response) {
+
+                            if (btn) {
+                                btn.innerHTML = '<i class="fa-solid fa-check-circle me-2"></i> Verifying...';
+                            }
+
+                            try {
+                                const verifyRes = await fetch(
+                                    "{{ url_for('shop.verify_payment') }}",
+                                    {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            razorpay_payment_id: response.razorpay_payment_id,
+                                            type: type
+                                        })
+                                    }
+                                );
+
+                                const result = await verifyRes.json();
+
+                                if (result.status === 'success') {
+                                    window.location.reload();
+                                } else {
+                                    alert("Verification failed on server.");
+
+                                    if (btn) {
+                                        btn.disabled = false;
+                                        btn.innerHTML = originalHTML;
+                                    }
+                                }
+
+                            } catch (error) {
+                                alert("Payment verification failed.");
+
+                                if (btn) {
+                                    btn.disabled = false;
+                                    btn.innerHTML = originalHTML;
+                                }
+                            }
+                        },
+
+                        modal: {
+                            ondismiss: function () {
+                                if (btn) {
+                                    btn.disabled = false;
+                                    btn.innerHTML = originalHTML;
+                                }
+                            }
+                        },
+
+                        theme: {
+                            color: "#238636"
+                        }
+                    };
+
+                    const rzp = new Razorpay(rzpOptions);
+                    rzp.open();
+
+                } catch (error) {
+                    console.error("Razorpay Error:", error);
+                    alert("Payment Error: " + error.message);
+
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                    }
+                }
+            };
+
+        })();
+    </script>
+
+</body>
+</html>

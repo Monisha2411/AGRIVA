@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Find Local Labour{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #labour-map {
+        height: calc(100vh - 250px);
+        min-height: 550px;
+        border-radius: 20px;
+        border: 1px solid var(--border-glass);
+        box-shadow: var(--shadow-green);
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        background: rgba(15, 23, 42, 0.9) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+    }
+    .labour-popup {
+        width: 220px;
+        color: white;
+    }
+    .near-me-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-5" data-aos="fade-down">
+    <div class="col-lg-8">
+        <h2 class="display-5 fw-bold gradient-text mb-2">Find Local Labour</h2>
+        <p class="text-secondary">Search for available farm labourers by their live location and contact them directly.</p>
+    </div>
+    <div class="col-lg-4 text-lg-end d-flex align-items-end justify-content-lg-end gap-3">
+        <a href="{{ url_for('labour.register_labour') }}" class="btn btn-primary-glow btn-sm"><span>Register as Labour</span></a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4" data-aos="fade-up">
+    <div class="col-md-5">
+        <div class="input-group">
+            <span class="input-group-text bg-dark border-glass text-success"><i class="fa-solid fa-briefcase"></i></span>
+            <select id="workTypeFilter" class="form-select bg-dark border-glass text-white">
+                <option value="all">All Types of Work</option>
+                <option value="Harvesting">Harvesting</option>
+                <option value="Plowing">Plowing</option>
+                <option value="Sowing">Sowing</option>
+                <option value="Irrigation">Irrigation</option>
+                <option value="Pesticide Spraying">Pesticide Spraying</option>
+                <option value="General Labour">General Labour</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text bg-dark border-glass text-success"><i class="fa-solid fa-arrows-left-right"></i></span>
+            <select id="radiusFilter" class="form-select bg-dark border-glass text-white">
+                <option value="10000">Within 10 km</option>
+                <option value="25000">Within 25 km</option>
+                <option value="50000" selected>Within 50 km</option>
+                <option value="100000">Within 100 km</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <button id="findWorkers" class="btn btn-primary-glow w-100">
+            <span><i class="fa-solid fa-location-crosshairs me-2"></i> Find Workers</span>
+        </button>
+    </div>
+</div>
+
+<div class="position-relative" data-aos="zoom-in">
+    <div id="labour-map"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    (function() {
+        var mapInstance = null;
+        var markers = L.layerGroup();
+        var circleOverlay = null;
+
+        var initMap = function() {
+            var mapEl = document.getElementById('labour-map');
+            if (!mapEl || mapInstance) return;
+
+            // Use high-performance dark tiles (CartoDB Dark Matter) instead of CSS filters
+            mapInstance = L.map('labour-map', {
+                fadeAnimation: true,
+                zoomAnimation: true,
+                markerZoomAnimation: true
+            }).setView([20.5937, 78.9629], 5);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(mapInstance);
+
+            markers.addTo(mapInstance);
+        };
+
+        var findLabour = function(isAuto = false) {
+            var btn = document.getElementById('findWorkers');
+            var workType = document.getElementById('workTypeFilter').value;
+            var rad = parseInt(document.getElementById('radiusFilter').value) || 50000;
+            
+            if (!btn) return;
+            
+            if (!isAuto) btn.innerHTML = '<span><i class="fa-solid fa-satellite-dish fa-spin me-2"></i> Scanning...</span>';
+
+            if ("geolocation" in navigator) {
+                // Use fast cache if possible
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var uLat = pos.coords.latitude;
+                    var uLng = pos.coords.longitude;
+
+                    markers.clearLayers();
+                    if (circleOverlay) mapInstance.removeLayer(circleOverlay);
+
+                    // User Marker (Animated Pulse)
+                    L.circleMarker([uLat, uLng], {
+                        radius: 8, fillColor: "#00BCD4", color: "#fff", weight: 2, opacity: 1, fillOpacity: 1
+                    }).addTo(markers).bindPopup("<b>Your Location</b>");
+
+                    // Radius Overlay
+                    circleOverlay = L.circle([uLat, uLng], {
+                        radius: rad, color: '#4CAF50', fillColor: '#4CAF50', fillOpacity: 0.08, weight: 1
+                    }).addTo(mapInstance);
+
+                    var workers = {{ map_data | tojson | safe }};
+                    var count = 0;
+
+                    workers.forEach(function(w) {
+                        if (workType !== 'all' && w.work_type !== workType) return;
+
+                        var wPos = L.latLng(w.lat, w.lng);
+                        var uPos = L.latLng(uLat, uLng);
+                        var dist = uPos.distanceTo(wPos);
+
+                        if (dist <= rad) {
+                            var content = `
+                                <div class="labour-popup">
+                                    <div class="d-flex align-items-center gap-3 mb-3">
+                                        <img src="${w.profile_pic ? '/static/uploads/' + w.profile_pic : 'https://ui-avatars.com/api/?name=' + w.name + '&background=random'}" 
+                                             class="rounded-circle border border-2 border-success shadow-sm" 
+                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-success">${w.name}</h6>
+                                            ${w.is_verified ? '<span class="badge bg-success-glow py-1 px-2" style="font-size:0.65rem; color: #4CAF50;"><i class="fa-solid fa-circle-check me-1"></i>VERIFIED</span>' : ''}
+                                        </div>
+                                    </div>
+                                    <p class="small mb-1"><i class="fa-solid fa-briefcase me-2 text-success"></i>${w.work_type || 'Labour'}</p>
+                                    <p class="small mb-1 text-white-50"><i class="fa-solid fa-location-dot me-2 text-success"></i>${w.address || 'Local'}</p>
+                                    <p class="small text-white-50 mb-3"><i class="fa-solid fa-map-pin me-1 text-success"></i> ${(dist/1000).toFixed(1)} km away</p>
+                                    <div class="d-flex gap-2">
+                                        <a href="tel:${w.phone}" class="btn btn-sm btn-success flex-fill py-2"><i class="fa-solid fa-phone"></i> Call</a>
+                                        <a href="https://wa.me/91${w.phone.slice(-10)}" target="_blank" class="btn btn-sm btn-outline-success flex-fill py-2"><i class="fa-brands fa-whatsapp"></i> Chat</a>
+                                    </div>
+                                </div>
+                            `;
+                            L.marker([w.lat, w.lng]).addTo(markers).bindPopup(content);
+                            count++;
+                        }
+                    });
+
+                    // Fast Smooth FlyTo
+                    mapInstance.flyTo([uLat, uLng], 11, { duration: 1.2, easeLinearity: 0.25 });
+                    btn.innerHTML = `<span><i class="fa-solid fa-users me-2"></i> ${count} Matches Found</span>`;
+                    
+                }, function() {
+                    btn.innerHTML = '<span><i class="fa-solid fa-location-crosshairs me-2"></i> Find Workers</span>';
+                }, { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 });
+            }
+        };
+
+        initMap();
+        
+        // Instant Filtering Event Listeners
+        document.getElementById('findWorkers').addEventListener('click', function() { findLabour(false); });
+        document.getElementById('workTypeFilter').addEventListener('change', function() { findLabour(true); });
+        document.getElementById('radiusFilter').addEventListener('change', function() { findLabour(true); });
+
+        document.body.addEventListener('htmx:afterOnLoad', function() {
+            if (!document.getElementById('labour-map')) {
+                mapInstance = null;
+            } else {
+                initMap();
+            }
+        });
+    })();
+</script>
+{% endblock %}

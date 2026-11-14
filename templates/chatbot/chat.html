@@ -1,0 +1,676 @@
+
+{% extends "base.html" %}
+{% block title %}AgriBot Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-container {
+    min-height: 650px;
+    height: min(78vh, 850px);
+    background: rgba(255,255,255,.95);
+    border: 1px solid var(--border-glass);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(30,80,45,.07);
+}
+
+.chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(40,130,65,.25);
+    border-radius: 10px;
+}
+
+.chat-input-area {
+    background: #fff;
+    border-top: 1px solid var(--border-glass);
+    padding: 1.5rem 2rem;
+}
+
+.quick-chip {
+    cursor: pointer;
+    white-space: nowrap;
+    background: rgba(76,175,80,.1);
+    border: 1px solid rgba(76,175,80,.2);
+    color: var(--accent);
+    padding: .65rem 1.2rem;
+    border-radius: 50px;
+    font-size: .9rem;
+    font-weight: 600;
+    transition: .2s;
+}
+.quick-chip:hover {
+    background: rgba(76,175,80,.2);
+    transform: translateY(-2px);
+}
+
+.chat-bubble-bot,
+.chat-bubble-user {
+    max-width: 88%;
+    padding: 1rem 1.25rem;
+    border-radius: 18px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.chat-bubble-bot {
+    align-self: flex-start;
+    background: #fff;
+    color: #30363b;
+    border: 1px solid #edf1ed;
+    box-shadow: 0 3px 12px rgba(0,0,0,.025);
+}
+
+.chat-bubble-user {
+    align-self: flex-end;
+    background: linear-gradient(120deg,#27833b,#4caf50);
+    color: #fff;
+    border-radius: 18px 18px 4px 18px;
+}
+
+.chat-bubble-bot > strong {
+    display: block;
+    color: #21863d;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: .65rem;
+}
+
+.bot-content {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #30363b;
+}
+
+.bot-content h1,
+.bot-content h2,
+.bot-content h3,
+.bot-content h4 {
+    color: #176b37;
+    font-weight: 750;
+    line-height: 1.4;
+    margin: 1.3rem 0 .7rem;
+}
+
+.bot-content h1 { font-size: 1.45rem; }
+.bot-content h2 { font-size: 1.25rem; }
+.bot-content h3 { font-size: 1.1rem; }
+.bot-content h4 { font-size: 1rem; }
+
+.bot-content p {
+    margin: .7rem 0;
+}
+
+.bot-content ul,
+.bot-content ol {
+    padding-left: 1.5rem;
+    margin: .8rem 0;
+}
+
+.bot-content li {
+    margin-bottom: .45rem;
+}
+
+.bot-content strong {
+    color: #176b37;
+    font-weight: 700;
+}
+
+.bot-content blockquote {
+    border-left: 4px solid #3c9a50;
+    background: #f2f8f1;
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 5px;
+}
+
+.bot-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid #dfe9df;
+    border-radius: 12px;
+}
+
+.bot-content table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 480px;
+    font-size: .92rem;
+}
+
+.bot-content th {
+    background: #eaf5e9;
+    color: #176b37;
+    font-weight: 700;
+    text-align: left;
+}
+
+.bot-content th,
+.bot-content td {
+    padding: .8rem;
+    border-bottom: 1px solid #e5ece5;
+    border-right: 1px solid #e5ece5;
+}
+
+.bot-content tr:last-child td {
+    border-bottom: none;
+}
+
+.bot-content code {
+    background: #eef4ee;
+    color: #176b37;
+    padding: .15rem .4rem;
+    border-radius: 4px;
+}
+
+.bot-content pre {
+    background: #202b24;
+    color: #fff;
+    padding: 1rem;
+    border-radius: 10px;
+    overflow-x: auto;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.typing-dots span {
+    width: 7px;
+    height: 7px;
+    background: #31934a;
+    border-radius: 50%;
+    animation: typing 1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: .15s; }
+.typing-dots span:nth-child(3) { animation-delay: .3s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
+}
+
+@media(max-width:768px) {
+    .chat-container {
+        height: 75vh;
+        min-height: 550px;
+    }
+
+    .chat-messages {
+        padding: 1rem;
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+    }
+
+    .chat-bubble-bot,
+    .chat-bubble-user {
+        max-width: 96%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-11">
+
+            <div class="text-center mb-4">
+                <h2 class="display-5 fw-bold gradient-text mb-2">
+                    AgriBot Assistant
+                </h2>
+                <p class="text-secondary">
+                    AI-powered farming expertise at your fingertips
+                </p>
+            </div>
+
+            <div class="chat-container">
+
+                <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="feature-icon-wrapper me-3 mb-0"
+                             style="width:50px;height:50px;font-size:1.2rem;">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-dark">AgriBot v1.5</h5>
+                            <small class="text-secondary">
+                                <span class="text-success">●</span>
+                                Online • Groq AI Engine
+                            </small>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline-glow btn-sm px-3"
+                            id="clearChatBtn">
+                        <i class="fa-solid fa-trash-can me-2"></i>
+                        Clear Chat
+                    </button>
+                </div>
+
+                <div class="chat-messages" id="chatWindow">
+                    <div class="chat-bubble-bot">
+                        <strong>AgriBot</strong>
+                        <div class="bot-content">
+                            <p>
+                                Namaste! I am your AI farming expert.
+                                I can help you with crop diseases,
+                                fertilizers, market trends, and
+                                government schemes.
+                            </p>
+                            <p>How can I assist your farm today?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+
+                    <div class="mb-4 d-flex gap-2 overflow-auto pb-2"
+                         style="scrollbar-width:none;">
+
+                        <button type="button" class="quick-chip quick-btn">
+                            Best crops for monsoon?
+                        </button>
+
+                        <button type="button" class="quick-chip quick-btn">
+                            Details on PM-Kisan scheme
+                        </button>
+
+                        <button type="button" class="quick-chip quick-btn">
+                            Organic fertilizer mixing
+                        </button>
+
+                        <button type="button" class="quick-chip quick-btn">
+                            Tomato price in Maharashtra
+                        </button>
+
+                        <button type="button" class="quick-chip quick-btn">
+                            How to treat Rice Blast?
+                        </button>
+
+                    </div>
+
+                    <form id="chatForm">
+                        <div class="input-group input-group-lg bg-glass-sm rounded-pill p-1 border border-glass">
+
+                            <input
+                                type="text"
+                                id="userInput"
+                                class="form-control border-0 bg-transparent shadow-none text-dark px-4"
+                                placeholder="Type your farming question here..."
+                                required
+                                autocomplete="off"
+                            >
+
+                            <button class="btn btn-primary-glow rounded-pill px-4"
+                                    type="submit"
+                                    id="sendBtn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    const chatWindow = document.getElementById('chatWindow');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+    const clearBtn = document.getElementById('clearChatBtn');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Escape HTML to safely display text from the AI.
+    function escapeHTML(text) {
+        return String(text).replace(/[&<>"']/g, function(char) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char];
+        });
+    }
+
+    // Convert Markdown tables into HTML.
+    function renderTable(rows) {
+        const parsed = rows.map(row =>
+            row.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim())
+        );
+
+        if (parsed.length < 2) return '';
+
+        const headers = parsed[0];
+        const bodyRows = parsed.slice(2);
+
+        let html = '<div class="bot-table-wrap"><table><thead><tr>';
+
+        headers.forEach(cell => {
+            html += '<th>' + formatInline(cell) + '</th>';
+        });
+
+        html += '</tr></thead><tbody>';
+
+        bodyRows.forEach(row => {
+            if (!row.some(cell => cell)) return;
+
+            html += '<tr>';
+
+            headers.forEach((_, index) => {
+                html += '<td>' + formatInline(row[index] || '') + '</td>';
+            });
+
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+
+        return html;
+    }
+
+    function formatInline(text) {
+        let html = escapeHTML(text);
+
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        return html;
+    }
+
+    function renderMarkdown(text) {
+        const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+        let html = '';
+        let paragraph = [];
+        let listType = null;
+        let listItems = [];
+
+        function flushParagraph() {
+            if (paragraph.length) {
+                html += '<p>' +
+                    paragraph.map(formatInline).join('<br>') +
+                    '</p>';
+                paragraph = [];
+            }
+        }
+
+        function flushList() {
+            if (!listType) return;
+
+            html += '<' + listType + '>';
+
+            listItems.forEach(item => {
+                html += '<li>' + formatInline(item) + '</li>';
+            });
+
+            html += '</' + listType + '>';
+
+            listType = null;
+            listItems = [];
+        }
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            if (!trimmed || /^[-*_]{3,}$/.test(trimmed)) {
+                flushParagraph();
+                flushList();
+                continue;
+            }
+
+            // Markdown table
+            if (
+                trimmed.startsWith('|') &&
+                i + 1 < lines.length &&
+                /^\|?[\s:|-]+\|?$/.test(lines[i + 1].trim())
+            ) {
+                flushParagraph();
+                flushList();
+
+                const tableRows = [line];
+                i++;
+
+                while (
+                    i + 1 < lines.length &&
+                    lines[i + 1].trim().startsWith('|')
+                ) {
+                    i++;
+                    tableRows.push(lines[i]);
+                }
+
+                html += renderTable(tableRows);
+                continue;
+            }
+
+            // Headings
+            const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+
+            if (heading) {
+                flushParagraph();
+                flushList();
+
+                const level = heading[1].length;
+                html += '<h' + level + '>' +
+                    formatInline(heading[2]) +
+                    '</h' + level + '>';
+                continue;
+            }
+
+            // Blockquote
+            if (trimmed.startsWith('&gt;') || trimmed.startsWith('>')) {
+                flushParagraph();
+                flushList();
+
+                html += '<blockquote>' +
+                    formatInline(trimmed.replace(/^>\s*/, '')) +
+                    '</blockquote>';
+                continue;
+            }
+
+            // Numbered list
+            const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+
+            // Bullet list
+            const bullet = trimmed.match(/^[-*+]\s+(.+)$/);
+
+            if (numbered || bullet) {
+                flushParagraph();
+
+                const newType = numbered ? 'ol' : 'ul';
+
+                if (listType && listType !== newType) {
+                    flushList();
+                }
+
+                listType = newType;
+                listItems.push(numbered ? numbered[1] : bullet[1]);
+                continue;
+            }
+
+            flushList();
+            paragraph.push(trimmed);
+        }
+
+        flushParagraph();
+        flushList();
+
+        return html;
+    }
+
+    function appendMessage(text, sender) {
+        const div = document.createElement('div');
+
+        div.className = sender === 'bot'
+            ? 'chat-bubble-bot'
+            : 'chat-bubble-user';
+
+        if (sender === 'bot') {
+            const title = document.createElement('strong');
+            title.textContent = 'AgriBot';
+
+            const content = document.createElement('div');
+            content.className = 'bot-content';
+            content.innerHTML = renderMarkdown(text);
+
+            div.appendChild(title);
+            div.appendChild(content);
+        } else {
+            const content = document.createElement('div');
+            content.textContent = text;
+            div.appendChild(content);
+        }
+
+        chatWindow.appendChild(div);
+
+        chatWindow.scrollTo({
+            top: chatWindow.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'chat-bubble-bot';
+        div.id = 'typing-' + Date.now();
+
+        div.innerHTML = `
+            <strong>AgriBot</strong>
+            <div class="typing-dots mt-2">
+                <span></span><span></span><span></span>
+            </div>
+        `;
+
+        chatWindow.appendChild(div);
+
+        chatWindow.scrollTo({
+            top: chatWindow.scrollHeight,
+            behavior: 'smooth'
+        });
+
+        return div.id;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const prefillQuery = urlParams.get('q');
+
+    if (prefillQuery) {
+        userInput.value = prefillQuery;
+
+        setTimeout(() => {
+            chatForm.requestSubmit();
+        }, 800);
+    }
+
+    chatForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const text = userInput.value.trim();
+
+        if (!text) return;
+
+        appendMessage(text, 'user');
+        userInput.value = '';
+
+        sendBtn.disabled = true;
+
+        const typingId = showTyping();
+
+        try {
+            const response = await fetch(
+                "{{ url_for('chatbot.ask') }}",
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: text
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            document.getElementById(typingId)?.remove();
+
+            if (data.status === 'success') {
+                appendMessage(data.response, 'bot');
+            } else {
+                appendMessage(
+                    data.message || 'Unable to get an AI response.',
+                    'bot'
+                );
+            }
+
+        } catch (error) {
+            document.getElementById(typingId)?.remove();
+
+            appendMessage(
+                'Internet error communicating with AI. Please try again.',
+                'bot'
+            );
+
+        } finally {
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    });
+
+    clearBtn.addEventListener('click', async function() {
+        try {
+            await fetch(
+                "{{ url_for('chatbot.clear') }}",
+                { method: 'POST' }
+            );
+
+            chatWindow.innerHTML = '';
+
+            appendMessage(
+                'Chat history cleared. How can I assist you now?',
+                'bot'
+            );
+
+        } catch (error) {
+            appendMessage('Unable to clear chat history.', 'bot');
+        }
+    });
+
+    document.querySelectorAll('.quick-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            userInput.value = this.innerText.trim();
+            chatForm.requestSubmit();
+        });
+    });
+
+});
+</script>
+{% endblock %}

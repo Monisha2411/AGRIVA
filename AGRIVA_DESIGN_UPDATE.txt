@@ -1,0 +1,16 @@
+AGRIVA DESIGN UPDATE
+
+Updated:
+- Shared base template branding and navigation styling.
+- Homepage with redesigned hero, feature cards, How AGRIVA Works, and marketplace call-to-action.
+- Global CSS theme for consistent green branding, readable light surfaces, forms, cards, tables, alerts, and mobile navigation.
+- Login and registration visual consistency.
+
+Preserved:
+- Flask application and route handlers.
+- Database models and configuration.
+- Existing feature templates and application workflows.
+- Static JavaScript and model assets.
+
+Replace your local project folder with this updated project only after keeping a backup.
+Do not upload .env files or secrets to GitHub.

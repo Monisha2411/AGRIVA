@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}AGRIVA | Smart Agriculture Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --agriva-green: #176b38;
+        --agriva-dark: #123b28;
+        --agriva-accent: #a8df65;
+        --agriva-bg: #f6faf5;
+        --agriva-text: #203b2b;
+        --agriva-muted: #68786c;
+    }
+
+    #main-content {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .agriva-home {
+        width: 100%;
+        overflow: hidden;
+        background: var(--agriva-bg);
+        color: var(--agriva-text);
+    }
+
+    .agriva-home * { box-sizing: border-box; }
+
+    .agriva-hero {
+        min-height: 650px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 100px 24px 120px;
+        background:
+            linear-gradient(105deg, rgba(7, 34, 20, .91) 0%, rgba(9, 48, 27, .78) 48%, rgba(9, 48, 27, .28) 100%),
+            url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=85');
+        background-size: cover;
+        background-position: center;
+        color: #fff;
+    }
+
+    .agriva-hero-content {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+    }
+
+    .hero-copy { max-width: 760px; }
+
+    .hero-tag, .section-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        color: #d9f3c5;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+    }
+
+    .hero-tag {
+        padding: 10px 16px;
+        border: 1px solid rgba(255,255,255,.3);
+        border-radius: 50px;
+        background: rgba(255,255,255,.1);
+        margin-bottom: 25px;
+    }
+
+    .agriva-hero h1 {
+        margin: 0 0 20px;
+        color: #fff !important;
+        font-family: 'Poppins', sans-serif;
+        font-size: clamp(2.8rem, 6vw, 5.2rem);
+        font-weight: 800;
+        line-height: 1.08;
+        letter-spacing: -1.5px;
+    }
+
+    .agriva-hero h1 span { color: var(--agriva-accent) !important; }
+
+    .agriva-hero h2 {
+        margin: 0 0 18px;
+        color: #fff !important;
+        font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+        font-weight: 600;
+    }
+
+    .agriva-hero p {
+        max-width: 680px;
+        margin: 0 0 32px;
+        color: #edf5ec !important;
+        font-size: 1.04rem;
+        line-height: 1.85;
+    }
+
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+
+    .hero-btn, .marketplace-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 50px;
+        padding: 14px 24px;
+        border-radius: 9px;
+        font-weight: 750;
+        text-decoration: none;
+        transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+
+    .hero-btn:hover, .marketplace-btn:hover {
+        transform: translateY(-3px);
+        text-decoration: none;
+    }
+
+    .hero-btn-primary {
+        color: #173b27;
+        background: var(--agriva-accent);
+        border: 1px solid var(--agriva-accent);
+        box-shadow: 0 8px 22px rgba(0,0,0,.15);
+    }
+
+    .hero-btn-primary:hover { color: #173b27; background: #c0ed8b; }
+
+    .hero-btn-outline {
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.75);
+        background: rgba(255,255,255,.08);
+    }
+
+    .hero-btn-outline:hover { color: var(--agriva-dark); background: #fff; }
+
+    .hero-note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 28px;
+        color: #e3efdf;
+        font-size: .9rem;
+    }
+
+    .hero-note i { color: var(--agriva-accent); }
+
+    .intro-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 85px 22px 35px;
+        text-align: center;
+    }
+
+    .section-tag { color: var(--agriva-green); }
+
+    .section-heading {
+        margin: 13px 0 15px;
+        color: var(--agriva-dark) !important;
+        font-size: clamp(1.9rem, 4vw, 2.8rem);
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .section-description {
+        max-width: 730px;
+        margin: 0 auto;
+        color: var(--agriva-muted);
+        font-size: 1rem;
+        line-height: 1.85;
+    }
+
+    .features-section {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 30px 22px 85px;
+    }
+
+    .feature-card {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        height: 100%;
+        min-height: 315px;
+        padding: 30px 27px;
+        border: 1px solid #e3eee2;
+        border-radius: 17px;
+        background: #fff;
+        box-shadow: 0 8px 28px rgba(27,70,39,.055);
+        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-7px);
+        border-color: #acd4a5;
+        box-shadow: 0 17px 36px rgba(27,70,39,.11);
+    }
+
+    .feature-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 62px;
+        height: 62px;
+        margin-bottom: 23px;
+        border-radius: 17px;
+        background: #eaf5e9;
+        color: var(--agriva-green);
+        font-size: 25px;
+    }
+
+    .feature-card h3 {
+        margin: 0 0 12px;
+        color: var(--agriva-text) !important;
+        font-size: 1.18rem;
+        font-weight: 800;
+    }
+
+    .feature-card p {
+        margin: 0 0 23px;
+        color: var(--agriva-muted);
+        font-size: .94rem;
+        line-height: 1.8;
+    }
+
+    .feature-link {
+        margin-top: auto;
+        color: var(--agriva-green);
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .feature-link:hover { color: #8aaf32; }
+
+    .how-section {
+        padding: 80px 22px;
+        background: #edf5eb;
+    }
+
+    .how-inner { max-width: 1180px; margin: 0 auto; }
+
+    .how-step {
+        height: 100%;
+        padding: 28px 24px;
+        border: 1px solid #deeadb;
+        border-radius: 15px;
+        background: rgba(255,255,255,.85);
+    }
+
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        margin-bottom: 17px;
+        border-radius: 50%;
+        background: var(--agriva-green);
+        color: #fff;
+        font-weight: 800;
+    }
+
+    .how-step h3 {
+        margin: 0 0 10px;
+        color: var(--agriva-dark);
+        font-size: 1.08rem;
+        font-weight: 800;
+    }
+
+    .how-step p {
+        margin: 0;
+        color: var(--agriva-muted);
+        font-size: .93rem;
+        line-height: 1.75;
+    }
+
+    .marketplace-wrap { padding: 80px 22px; }
+
+    .marketplace-section {
+        position: relative;
+        max-width: 1230px;
+        margin: 0 auto;
+        padding: 70px 28px;
+        overflow: hidden;
+        border-radius: 23px;
+        background:
+            linear-gradient(115deg, rgba(13,55,32,.97), rgba(30,105,59,.91)),
+            url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1500&q=80');
+        background-size: cover;
+        background-position: center;
+        text-align: center;
+        color: #fff;
+    }
+
+    .marketplace-section .section-tag { color: #c7ed9d; }
+
+    .marketplace-section h2 {
+        margin: 14px 0;
+        color: #fff !important;
+        font-size: clamp(1.9rem, 4vw, 2.8rem);
+        font-weight: 800;
+    }
+
+    .marketplace-section p {
+        max-width: 720px;
+        margin: 0 auto 28px;
+        color: #edf5ec !important;
+        line-height: 1.85;
+    }
+
+    .marketplace-btn {
+        color: #173b27;
+        background: var(--agriva-accent);
+    }
+
+    .marketplace-btn:hover { color: #173b27; background: #fff; }
+
+    .closing-section {
+        padding: 5px 22px 75px;
+        text-align: center;
+    }
+
+    .closing-section h2 {
+        margin: 0 0 12px;
+        color: var(--agriva-dark);
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        font-weight: 800;
+    }
+
+    .closing-section p {
+        max-width: 650px;
+        margin: 0 auto 23px;
+        color: var(--agriva-muted);
+        line-height: 1.8;
+    }
+
+    .closing-section .hero-btn-primary { background: var(--agriva-green); border-color: var(--agriva-green); color: #fff; }
+    .closing-section .hero-btn-primary:hover { background: #10542b; color: #fff; }
+
+    .agriva-bottom {
+        padding: 25px 20px;
+        border-top: 1px solid #e4ece2;
+        background: #fff;
+        color: #718174;
+        text-align: center;
+        font-size: .88rem;
+    }
+
+    .agriva-bottom i { margin-right: 7px; color: var(--agriva-green); }
+
+    @media (max-width: 768px) {
+        .agriva-hero { min-height: 590px; padding: 75px 20px 95px; background-position: 58% center; }
+        .agriva-hero p { font-size: .96rem; }
+        .intro-section { padding-top: 65px; }
+        .features-section { padding: 20px 16px 65px; }
+        .how-section, .marketplace-wrap { padding: 60px 16px; }
+        .marketplace-section { padding: 52px 20px; }
+    }
+
+    @media (max-width: 480px) {
+        .hero-actions { flex-direction: column; }
+        .hero-btn { width: 100%; }
+        .hero-note { align-items: flex-start; text-align: left; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agriva-home">
+
+    <section class="agriva-hero">
+        <div class="agriva-hero-content" data-aos="fade-up">
+            <div class="hero-copy">
+                <div class="hero-tag">
+                    <i class="fa-solid fa-leaf"></i>
+                    AGRIVA SMART AGRICULTURE
+                </div>
+
+                <h1>Grow Smarter.<br><span>Farm Better.</span></h1>
+                <h2>Technology for the Future of Agriculture</h2>
+                <p>
+                    Make informed farming decisions with AI-powered guidance,
+                    crop planning, government scheme information and a digital
+                    marketplace. AGRIVA brings useful agricultural services
+                    together in one place.
+                </p>
+
+                <div class="hero-actions">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('dashboard.home') }}" class="hero-btn hero-btn-primary">
+                        <i class="fa-solid fa-gauge-high"></i> Go to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.register') }}" class="hero-btn hero-btn-primary">
+                        <i class="fa-solid fa-user-plus"></i> Join as Farmer
+                    </a>
+                    <a href="{{ url_for('marketplace.browse') }}" class="hero-btn hero-btn-outline">
+                        <i class="fa-solid fa-store"></i> Browse Marketplace
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="hero-note">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Crop guidance, farmer support and market access in one platform</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="intro-section" data-aos="fade-up">
+        <span class="section-tag">Discover AGRIVA</span>
+        <h2 class="section-heading">Your Farm. Connected to Smarter Tools.</h2>
+        <p class="section-description">
+            Explore digital services designed to support everyday farming activities,
+            from crop planning and agricultural information to government support
+            and post-harvest storage.
+        </p>
+    </section>
+
+    <section class="features-section">
+        <div class="row g-4">
+            <div class="col-12 col-md-6 col-xl-3" data-aos="fade-up">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-route"></i></div>
+                    <h3>Smart Roadmap</h3>
+                    <p>
+                        Follow a crop guide with suggested activities for watering,
+                        fertilization and pest management throughout the crop cycle.
+                    </p>
+                    <a href="{{ url_for('roadmap.index') }}" class="feature-link">
+                        Generate Guide <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3" data-aos="fade-up" data-aos-delay="80">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-robot"></i></div>
+                    <h3>AGRIVA AI Assistant</h3>
+                    <p>
+                        Ask questions about farming practices, fertilizers,
+                        crop care and agricultural information.
+                    </p>
+                    <a href="{{ url_for('chatbot.chat') }}" class="feature-link">
+                        Chat Now <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3" data-aos="fade-up" data-aos-delay="160">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>Gov Mitra</h3>
+                    <p>
+                        Find information about agricultural government schemes,
+                        subsidies and support programmes.
+                    </p>
+                    <a href="{{ url_for('gov_mitra.dashboard') }}" class="feature-link">
+                        Explore Schemes <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-3" data-aos="fade-up" data-aos-delay="240">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fa-solid fa-snowflake"></i></div>
+                    <h3>Cooler Network</h3>
+                    <p>
+                        Explore cold storage and warehouse options for
+                        storing harvested crops after collection.
+                    </p>
+                    <a href="{{ url_for('cooler.index') }}" class="feature-link">
+                        Find Storage <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-section">
+        <div class="how-inner">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <span class="section-tag">Simple to Get Started</span>
+                <h2 class="section-heading">How AGRIVA Works</h2>
+                <p class="section-description">
+                    Start with the service you need and use the platform
+                    to support your farming decisions.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12 col-md-4" data-aos="fade-up">
+                    <div class="how-step">
+                        <span class="step-number">01</span>
+                        <h3>Create Your Account</h3>
+                        <p>Register and access the agricultural services available on AGRIVA.</p>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="how-step">
+                        <span class="step-number">02</span>
+                        <h3>Choose a Service</h3>
+                        <p>Open crop guidance, AI assistance, scheme information or storage services.</p>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="how-step">
+                        <span class="step-number">03</span>
+                        <h3>Take the Next Step</h3>
+                        <p>Use the information and tools to plan your next farming activity.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="marketplace-wrap">
+        <div class="marketplace-section" data-aos="fade-up">
+            <span class="section-tag">Connect Directly</span>
+            <h2>Explore the AGRIVA Marketplace</h2>
+            <p>
+                Discover crop listings through a digital marketplace.
+                Browse available produce and connect with sellers directly.
+            </p>
+            <a href="{{ url_for('marketplace.browse') }}" class="marketplace-btn">
+                <i class="fa-solid fa-store"></i> Explore Marketplace
+            </a>
+        </div>
+    </section>
+
+    <section class="closing-section">
+        <h2>Bring Your Farming Activities Together</h2>
+        <p>
+            Get started with AGRIVA and explore the tools available
+            to support your agricultural needs.
+        </p>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard.home') }}" class="hero-btn hero-btn-primary">
+            Open Your Dashboard <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.register') }}" class="hero-btn hero-btn-primary">
+            Create Your Account <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        {% endif %}
+    </section>
+
+    <div class="agriva-bottom">
+        <i class="fa-solid fa-leaf"></i>
+        AGRIVA. Smart Farming. Better Future.
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    function initializeAgrivaHome() {
+        if (window.AOS) {
+            AOS.refresh();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeAgrivaHome);
+    } else {
+        initializeAgrivaHome();
+    }
+
+    document.body.addEventListener('htmx:afterSettle', initializeAgrivaHome);
+})();
+</script>
+{% endblock %}
