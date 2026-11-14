@@ -1,12 +1,11 @@
+
 import os
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, jsonify
 from flask_login import LoginManager
 from dotenv import load_dotenv
 
-# Load explicitly here, but also handled in config.py
 load_dotenv()
 
-# Imports for initialization
 from config import Config
 from models import db
 from models.user import User
@@ -29,17 +28,19 @@ from routes.goat import goat_bp
 from routes.cooler import cooler_bp
 from routes.vision import vision_bp
 
+
 def create_app():
     """Create and configure the Flask application."""
+
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Database Initialization
+    # Database initialization
     db.init_app(app)
 
-    # Auth Initialization
+    # Authentication initialization
     bcrypt.init_app(app)
-    
+
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'warning'
@@ -49,7 +50,7 @@ def create_app():
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
-    # Mail Initialization
+    # Mail initialization
     mail.init_app(app)
 
     # Register Blueprints
@@ -70,150 +71,118 @@ def create_app():
     app.register_blueprint(cooler_bp)
     app.register_blueprint(vision_bp)
 
-    # Ensure directories exist (Try/Except for Serverless read-only compatibility)
+    # Create required directories
     try:
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-        os.makedirs(os.path.join(os.getcwd(), 'database'), exist_ok=True)
-    except OSError:
-        pass
+        os.makedirs(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database'),
+            exist_ok=True
+        )
+    except OSError as e:
+        app.logger.warning("Directory creation skipped: %s", e)
 
-    # Global Routes
+    # Home page
     @app.route('/')
     def index():
         return render_template('index.html')
-        
-    @app.route('/health')
-    def health():
-        """Health check route for Render."""
-        return "OK", 200
 
+    # Render health check
+    @app.route('/health', methods=['GET'])
+    def health():
+        return jsonify({
+            'status': 'healthy',
+            'application': 'AGRIVA'
+        }), 200
+
+    # Favicon
     @app.route('/favicon.ico')
     def favicon():
         return '', 204
 
+    # Error handlers
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template('404.html'), 404
-        
+
     @app.errorhandler(500)
     def internal_error(e):
+        db.session.rollback()
         return render_template('500.html'), 500
 
     return app
 
-# Expose the app object globally for Gunicorn
+
+# Create Flask application
 app = create_app()
 
-import threading
 
-def seed_database(app_instance):
-    """Background task to seed the database if it is empty."""
-    with app_instance.app_context():
-        from models.scheme import GovernmentScheme
-        try:
-            if GovernmentScheme.query.first() is None:
-                print("Empty database detected. Auto-seeding famous schemes...")
-                # Simplified list or import from separate script
-                schemes = [
-                    GovernmentScheme(
-                        name="Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
-                        ministry="Ministry of Agriculture",
-                        description="Financial assistance of ₹6,000 per year.",
-                        benefits="₹6,000/year in 3 installments.",
-                        eligibility="All landholding farmers.",
-                        documents="Aadhaar, Land records, Bank details.",
-                        apply_link="https://pmkisan.gov.in/RegistrationFormupdated.aspx",
-                        category="Financial Support"
-                    ),
-                    GovernmentScheme(
-                        name="E-Katha & Land Records (Karnataka)",
-                        ministry="Revenue Dept, Karnataka",
-                        description="Access digital records of land ownership.",
-                        benefits="Digital RTC/Pani and Ownership verification.",
-                        eligibility="Land owners in Karnataka.",
-                        documents="Survey Number, Village details.",
-                        apply_link="https://landrecords.karnataka.gov.in/",
-                        category="Records",
-                        is_state_specific=True,
-                        state="Karnataka"
-                    )
-                ]
-                db.session.bulk_save_objects(schemes)
-                db.session.commit()
-                print("Auto-seeding successful.")
-        except Exception as e:
-            print(f"Auto-seeding failed: {str(e)}")
-            db.session.rollback()
+def initialize_database():
+    """Initialize database tables and synchronize existing columns."""
 
-    # Start seeding in background thread if needed
-    # threading.Thread(target=seed_database, args=(app,)).start()
-
-with app.app_context():
-    try:
-        print("[DB Orbit] Establishing connection to BHOOMITRA Cloud (Supabase)...")
-        from models.marketplace import CropListing
-        from models.prediction import YieldPrediction, ChatHistory
-        from models.scheme import GovernmentScheme, SchemeApplication
-        from models.labour import LabourWorker
-        from models.shop import Shop, Product, Supplier, Sale, SaleItem, AutoOrder, ShopNotification
-        
-        # Ensure all tables are created (including the new CustomerOrder table)
-        db.create_all()
-        print("[DB Orbit] Tables Synchronized.")
-        
-        # Migration: Sync Schema Columns (Resilient Mode)
+    with app.app_context():
         from sqlalchemy import text
-        # 1. Product Image
-        try:
-            db.session.execute(text("ALTER TABLE shop_products ADD COLUMN image VARCHAR(255)"))
-            db.session.commit()
-        except: db.session.rollback()
-        # 2. Partner Name
-        try:
-            db.session.execute(text("ALTER TABLE shops ADD COLUMN partner_name VARCHAR(150)"))
-            db.session.commit()
-        except: db.session.rollback()
-        # 3. Partner Details
-        try:
-            db.session.execute(text("ALTER TABLE shops ADD COLUMN partner_details TEXT"))
-            db.session.commit()
-        except: db.session.rollback()
-        # 4. Tracking ID
-        try:
-            db.session.execute(text("ALTER TABLE customer_orders ADD COLUMN tracking_id VARCHAR(50)"))
-            db.session.commit()
-        except: db.session.rollback()
 
-        # 5. Labour Verification
-        for col, dtype in [("profile_pic", "VARCHAR(255)"), ("aadhaar_pic", "VARCHAR(255)"), ("is_verified", "BOOLEAN DEFAULT FALSE"), ("address", "VARCHAR(255)")]:
-            try:
-                db.session.execute(text(f"ALTER TABLE labour_workers ADD COLUMN {col} {dtype}"))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        
-        print("[DB Migration] Schema Sync: Processed.")
-        
-        # Skip create_all by default to prevent handshake hangs
-        if os.getenv('SYNC_DB_ON_START', 'False') == 'True':
+        try:
+            print("[AGRIVA] Establishing database connection...")
+
+            from models.marketplace import CropListing
+            from models.prediction import YieldPrediction, ChatHistory
+            from models.scheme import GovernmentScheme, SchemeApplication
+            from models.labour import LabourWorker
+            from models.shop import (
+                Shop, Product, Supplier, Sale, SaleItem,
+                AutoOrder, ShopNotification, CustomerOrder
+            )
+
             db.create_all()
-            print("[DB Orbit] Cloud Synchronization: ACTIVE.")
-        else:
-            print("[DB Orbit] Connection Synchronized Successfully.")
-    except Exception as e:
-        print(f"[DB Warning] Quick Sync Disturbance: {str(e)}")
-        print("[DB Orbit] Continuing in Resilient Mode.")
-    
-# ---------------------------------------------------------
-# SECURITY HEADERS (Improve Lighthouse Best Practices Score)
-# ---------------------------------------------------------
+            print("[AGRIVA] Database tables synchronized.")
+
+            # Database column migrations
+            migrations = [
+                ("shop_products", "image", "VARCHAR(255)"),
+                ("shops", "partner_name", "VARCHAR(150)"),
+                ("shops", "partner_details", "TEXT"),
+                ("customer_orders", "tracking_id", "VARCHAR(50)"),
+                ("labour_workers", "profile_pic", "VARCHAR(255)"),
+                ("labour_workers", "aadhaar_pic", "VARCHAR(255)"),
+                ("labour_workers", "is_verified", "BOOLEAN DEFAULT FALSE"),
+                ("labour_workers", "address", "VARCHAR(255)")
+            ]
+
+            for table, column, data_type in migrations:
+                try:
+                    db.session.execute(
+                        text(
+                            f"ALTER TABLE {table} "
+                            f"ADD COLUMN {column} {data_type}"
+                        )
+                    )
+                    db.session.commit()
+                    print(f"[AGRIVA] Added column {table}.{column}")
+
+                except Exception:
+                    db.session.rollback()
+
+            print("[AGRIVA] Database synchronization completed.")
+
+        except Exception as e:
+            db.session.rollback()
+            app.logger.exception(
+                "Database initialization encountered an error: %s", e
+            )
+
+
+# Initialize database
+initialize_database()
+
+
+# Security headers
 @app.after_request
 def add_security_headers(response):
-    # Disable security headers in local debug mode to prevent map/icon blocking
+
     if app.debug:
         return response
-        
-    # Content Security Policy (Allows necessary scripts and styles)
+
     response.headers['Content-Security-Policy'] = (
         "default-src 'self' http: https:; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:; "
@@ -223,17 +192,21 @@ def add_security_headers(response):
         "frame-src 'self' http: https:; "
         "connect-src 'self' http: https:;"
     )
-    
-    # HSTS (Forces HTTPS - 1 year)
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    
-    # MIME Sniffing Protection
+
+    response.headers['Strict-Transport-Security'] = (
+        'max-age=31536000; includeSubDomains'
+    )
+
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    
-    # Referrer Policy
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    
+
     return response
 
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(
+        host='0.0.0.0',
+        port=int(os.getenv('PORT', 5000)),
+        debug=debug_mode
+    )
