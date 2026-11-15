@@ -22,3 +22,4 @@ ultralytics
 groq
 twilio
 google-generativeai
+psycopg[binary]
